@@ -1,0 +1,15 @@
+spring:
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
+  flyway:
+    clean-disabled: true
+
+logging:
+  level:
+    root: WARN
+    com.harbr: INFO
+    org.hibernate.SQL: WARN
