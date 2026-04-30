@@ -8,6 +8,10 @@ spring:
   flyway:
     clean-disabled: true
 
+harbr:
+  jwt:
+    secret-key: ${HARBR_JWT_SECRET_KEY}
+
 logging:
   level:
     root: WARN

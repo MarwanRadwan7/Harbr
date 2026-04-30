@@ -29,6 +29,11 @@ spring:
 server:
   port: 8080
 
+harbr:
+  jwt:
+    access-token-expiration: 900000
+    refresh-token-expiration: 604800000
+
 springdoc:
   api-docs:
     path: /api/docs
