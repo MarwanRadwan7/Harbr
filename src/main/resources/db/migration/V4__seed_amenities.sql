@@ -1,0 +1,16 @@
+INSERT INTO amenities (id, name, category, icon_key) VALUES
+    ('a0000000-0000-0000-0000-000000000001', 'WiFi', 'BASIC', 'wifi'),
+    ('a0000000-0000-0000-0000-000000000002', 'Kitchen', 'BASIC', 'kitchen'),
+    ('a0000000-0000-0000-0000-000000000003', 'Washer', 'BASIC', 'washer'),
+    ('a0000000-0000-0000-0000-000000000004', 'Air Conditioning', 'BASIC', 'air-conditioning'),
+    ('a0000000-0000-0000-0000-000000000005', 'Heating', 'BASIC', 'heating'),
+    ('a0000000-0000-0000-0000-000000000006', 'TV', 'BASIC', 'tv'),
+    ('a0000000-0000-0000-0000-000000000007', 'Parking', 'BASIC', 'parking'),
+    ('a0000000-0000-0000-0000-000000000008', 'Pool', 'OUTDOOR', 'pool'),
+    ('a0000000-0000-0000-0000-000000000009', 'Garden', 'OUTDOOR', 'garden'),
+    ('a0000000-0000-0000-0000-000000000010', 'BBQ Grill', 'OUTDOOR', 'bbq'),
+    ('a0000000-0000-0000-0000-000000000011', 'Smoke Detector', 'SAFETY', 'smoke-detector'),
+    ('a0000000-0000-0000-0000-000000000012', 'Fire Extinguisher', 'SAFETY', 'fire-extinguisher'),
+    ('a0000000-0000-0000-0000-000000000013', 'First Aid Kit', 'SAFETY', 'first-aid'),
+    ('a0000000-0000-0000-0000-000000000014', 'Wheelchair Accessible', 'ACCESSIBILITY', 'wheelchair'),
+    ('a0000000-0000-0000-0000-000000000015', 'Elevator', 'ACCESSIBILITY', 'elevator');
