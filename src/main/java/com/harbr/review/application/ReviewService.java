@@ -6,6 +6,8 @@ import com.harbr.booking.infrastructure.BookingRepository;
 import com.harbr.common.exception.BusinessException;
 import com.harbr.common.exception.ConflictException;
 import com.harbr.common.exception.EntityNotFoundException;
+import com.harbr.notification.application.NotificationService;
+import com.harbr.notification.domain.NotificationChannel;
 import com.harbr.review.application.dto.CreateReviewRequest;
 import com.harbr.review.application.dto.PropertyRatingSummary;
 import com.harbr.review.application.dto.ReviewResponse;
@@ -26,6 +28,7 @@ public class ReviewService {
 
     private final ReviewRepository reviewRepository;
     private final BookingRepository bookingRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public ReviewResponse create(UUID guestId, CreateReviewRequest request) {
@@ -54,6 +57,14 @@ public class ReviewService {
 
         review = reviewRepository.save(review);
         log.info("Review created: id={}, property={}, rating={}", review.getId(), booking.getProperty().getId(), request.rating());
+
+        UUID hostId = booking.getProperty().getHost().getId();
+        notificationService.createNotification(
+                hostId, "New Review",
+                booking.getGuest().getFullName() + " left a " + request.rating() + "-star review on your property",
+                NotificationChannel.IN_APP, "REVIEW_CREATED", "review",
+                review.getId().toString(), review.getId(), "review"
+        );
 
         return toReviewResponse(review);
     }

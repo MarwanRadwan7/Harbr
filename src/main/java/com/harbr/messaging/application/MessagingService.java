@@ -12,6 +12,8 @@ import com.harbr.messaging.domain.Conversation;
 import com.harbr.messaging.domain.Message;
 import com.harbr.messaging.infrastructure.ConversationRepository;
 import com.harbr.messaging.infrastructure.MessageRepository;
+import com.harbr.notification.application.NotificationService;
+import com.harbr.notification.domain.NotificationChannel;
 import com.harbr.property.domain.Property;
 import com.harbr.property.infrastructure.PropertyRepository;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +36,7 @@ public class MessagingService {
     private final MessageRepository messageRepository;
     private final PropertyRepository propertyRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public ConversationResponse createConversation(UUID guestId, CreateConversationRequest request) {
@@ -106,6 +109,16 @@ public class MessagingService {
         conversation.setLastMessageContent(request.content());
         conversation.setLastMessageAt(Instant.now());
         conversationRepository.save(conversation);
+
+        UUID recipientId = conversation.getGuest().getId().equals(senderId)
+                ? conversation.getHost().getId()
+                : conversation.getGuest().getId();
+        notificationService.createNotification(
+                recipientId, "New Message",
+                sender.getFullName() + " sent you a message",
+                NotificationChannel.IN_APP, "MESSAGE_SENT", "conversation",
+                conversation.getId().toString(), conversation.getId(), "conversation"
+        );
 
         log.info("Message sent: id={}, conversation={}, sender={}", message.getId(), conversation.getId(), senderId);
 

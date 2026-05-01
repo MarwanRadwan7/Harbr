@@ -5,6 +5,8 @@ import com.harbr.booking.infrastructure.BookingRepository;
 import com.harbr.booking.infrastructure.PaymentTransactionRepository;
 import com.harbr.common.exception.BusinessException;
 import com.harbr.common.exception.EntityNotFoundException;
+import com.harbr.notification.application.NotificationService;
+import com.harbr.notification.domain.NotificationChannel;
 import com.harbr.payment.application.dto.CreatePaymentIntentRequest;
 import com.harbr.payment.application.dto.PaymentIntentResponse;
 import com.harbr.payment.infrastructure.PaymentGateway;
@@ -28,6 +30,7 @@ public class PaymentService {
     private final BookingRepository bookingRepository;
     private final PaymentGateway paymentGateway;
     private final PaymentProperties paymentProperties;
+    private final NotificationService notificationService;
 
     @Transactional
     public PaymentIntentResponse createPaymentIntent(UUID userId, CreatePaymentIntentRequest request) {
@@ -87,6 +90,13 @@ public class PaymentService {
                 booking.setStatus(BookingStatus.CONFIRMED);
                 bookingRepository.save(booking);
                 log.info("Booking confirmed via payment: bookingId={}", booking.getId());
+
+                notificationService.createNotification(
+                        booking.getGuest().getId(), "Payment Successful",
+                        "Your payment for " + booking.getProperty().getTitle() + " was successful. Booking confirmed!",
+                        NotificationChannel.IN_APP, "PAYMENT_SUCCEEDED", "payment",
+                        transaction.getId().toString(), booking.getId(), "booking"
+                );
             }
         } else {
             transaction.setStatus(PaymentStatus.FAILED);
@@ -97,6 +107,13 @@ public class PaymentService {
                 booking.setStatus(BookingStatus.REJECTED);
                 bookingRepository.save(booking);
                 log.info("Booking rejected via payment failure: bookingId={}", booking.getId());
+
+                notificationService.createNotification(
+                        booking.getGuest().getId(), "Payment Failed",
+                        "Your payment for " + booking.getProperty().getTitle() + " failed. Booking rejected.",
+                        NotificationChannel.IN_APP, "PAYMENT_FAILED", "payment",
+                        transaction.getId().toString(), booking.getId(), "booking"
+                );
             }
         }
 
