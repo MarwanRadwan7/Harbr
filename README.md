@@ -1,6 +1,6 @@
 # Harbr
 
-A full-stack short-term rental platform backend built with Spring Boot 4, providing RESTful APIs for property listings, bookings, payments, messaging, reviews, and notifications.
+A backend for rental platform built with Spring Boot 4, providing RESTful APIs for property listings, bookings, payments, messaging, reviews, and notifications.
 
 ## Tech Stack
 
