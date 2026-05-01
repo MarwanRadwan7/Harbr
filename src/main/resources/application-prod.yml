@@ -11,6 +11,10 @@ spring:
 harbr:
   jwt:
     secret-key: ${HARBR_JWT_SECRET_KEY}
+  payment:
+    provider: ${HARBR_PAYMENT_PROVIDER:stripe}
+    stripe-secret-key: ${STRIPE_SECRET_KEY}
+    stripe-webhook-secret: ${STRIPE_WEBHOOK_SECRET}
 
 logging:
   level:

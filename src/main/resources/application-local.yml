@@ -28,6 +28,8 @@ harbr:
     secret-key: Y2hhbmdlLXRoaXMtdG8tYS1zZWNyZXQta2V5LWZvci1wcm9kdWN0aW9uLWVudmlyb25tZW50
   storage:
     local-path: ./uploads
+  payment:
+    provider: mock
 
 logging:
   level:
