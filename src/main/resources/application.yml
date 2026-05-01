@@ -35,6 +35,9 @@ harbr:
     refresh-token-expiration: 604800000
   payment:
     provider: mock
+  search:
+    elasticsearch:
+      enabled: false
 
 springdoc:
   api-docs:

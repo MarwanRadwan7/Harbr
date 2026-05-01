@@ -12,6 +12,7 @@ import com.harbr.property.domain.*;
 import com.harbr.property.infrastructure.*;
 import com.harbr.search.application.ElasticsearchSyncService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -27,7 +28,6 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 public class PropertyService {
 
     private final PropertyRepository propertyRepository;
@@ -38,7 +38,9 @@ public class PropertyService {
     private final AvailabilityRuleRepository availabilityRuleRepository;
     private final UserRepository userRepository;
     private final FileStorageService fileStorageService;
-    private final ElasticsearchSyncService elasticsearchSyncService;
+
+    @Autowired(required = false)
+    private ElasticsearchSyncService elasticsearchSyncService;
 
     @Transactional
     public PropertyResponse create(UUID hostId, CreatePropertyRequest request) {
@@ -79,7 +81,7 @@ public class PropertyService {
             linkAmenities(property, request.amenityIds());
         }
 
-        elasticsearchSyncService.indexProperty(property);
+        if (elasticsearchSyncService != null) elasticsearchSyncService.indexProperty(property);
 
         return toPropertyResponse(property);
     }
@@ -138,7 +140,7 @@ public class PropertyService {
         }
 
         property = propertyRepository.save(property);
-        elasticsearchSyncService.indexProperty(property);
+        if (elasticsearchSyncService != null) elasticsearchSyncService.indexProperty(property);
         return toPropertyResponse(property);
     }
 
@@ -148,7 +150,7 @@ public class PropertyService {
         verifyOwnerOrAdmin(property, userId);
         property.setDeletedAt(Instant.now());
         propertyRepository.save(property);
-        elasticsearchSyncService.removeProperty(propertyId);
+        if (elasticsearchSyncService != null) elasticsearchSyncService.removeProperty(propertyId);
     }
 
     @Transactional

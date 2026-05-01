@@ -30,6 +30,9 @@ harbr:
     local-path: ./uploads
   payment:
     provider: mock
+  search:
+    elasticsearch:
+      enabled: true
 
 logging:
   level:
