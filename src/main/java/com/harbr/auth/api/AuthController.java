@@ -1,5 +1,6 @@
 package com.harbr.auth.api;
 
+import com.harbr.auth.application.AuthService;
 import com.harbr.auth.application.dto.*;
 import com.harbr.common.web.ApiResponse;
 import jakarta.validation.Valid;
