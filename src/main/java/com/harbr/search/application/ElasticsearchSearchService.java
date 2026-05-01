@@ -1,5 +1,8 @@
 package com.harbr.search.application;
 
+import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.json.JsonData;
 import com.harbr.search.domain.PropertyDocument;
 import com.harbr.search.infrastructure.PropertySearchRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -35,42 +39,48 @@ public class ElasticsearchSearchService {
                                           Boolean isInstantBook,
                                           int page, int size) {
 
-        var boolQuery = co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery.of(b -> {
-            b.filter(f -> f.term(t -> t.field("status").value("ACTIVE")));
+        List<Query> must = new ArrayList<>();
+        List<Query> filters = new ArrayList<>();
 
-            if (query != null && !query.isBlank()) {
-                b.must(m -> m.multiMatch(mm -> mm
-                        .fields("title", "description", "city", "hostName")
-                        .query(query)));
-            }
-            if (city != null && !city.isBlank()) {
-                b.filter(f -> f.term(t -> t.field("city").value(city)));
-            }
-            if (country != null && !country.isBlank()) {
-                b.filter(f -> f.term(t -> t.field("country").value(country)));
-            }
-            if (propertyType != null && !propertyType.isBlank()) {
-                b.filter(f -> f.term(t -> t.field("propertyType").value(propertyType)));
-            }
-            if (minBedrooms != null) {
-                b.filter(f -> f.range(r -> r.field("bedrooms").gte(co.elastic.clients.json.JsonData.of(minBedrooms))));
-            }
-            if (minBathrooms != null) {
-                b.filter(f -> f.range(r -> r.field("bathrooms").gte(co.elastic.clients.json.JsonData.of(minBathrooms))));
-            }
-            if (minGuests != null) {
-                b.filter(f -> f.range(r -> r.field("maxGuests").gte(co.elastic.clients.json.JsonData.of(minGuests))));
-            }
-            if (minPrice != null) {
-                b.filter(f -> f.range(r -> r.field("basePricePerNight").gte(co.elastic.clients.json.JsonData.of(minPrice.doubleValue()))));
-            }
-            if (maxPrice != null) {
-                b.filter(f -> f.range(r -> r.field("basePricePerNight").lte(co.elastic.clients.json.JsonData.of(maxPrice.doubleValue()))));
-            }
-            if (isInstantBook != null && isInstantBook) {
-                b.filter(f -> f.term(t -> t.field("isInstantBook").value(true)));
-            }
-        });
+        filters.add(Query.of(f -> f.term(t -> t.field("status").value("ACTIVE"))));
+
+        if (query != null && !query.isBlank()) {
+            must.add(Query.of(f -> f.multiMatch(mm -> mm
+                    .fields("title", "description", "city", "hostName")
+                    .query(query))));
+        }
+        if (city != null && !city.isBlank()) {
+            filters.add(Query.of(f -> f.term(t -> t.field("city").value(city))));
+        }
+        if (country != null && !country.isBlank()) {
+            filters.add(Query.of(f -> f.term(t -> t.field("country").value(country))));
+        }
+        if (propertyType != null && !propertyType.isBlank()) {
+            filters.add(Query.of(f -> f.term(t -> t.field("propertyType").value(propertyType))));
+        }
+        if (minBedrooms != null) {
+            filters.add(Query.of(f -> f.range(r -> r.field("bedrooms").gte(JsonData.of(minBedrooms)))));
+        }
+        if (minBathrooms != null) {
+            filters.add(Query.of(f -> f.range(r -> r.field("bathrooms").gte(JsonData.of(minBathrooms)))));
+        }
+        if (minGuests != null) {
+            filters.add(Query.of(f -> f.range(r -> r.field("maxGuests").gte(JsonData.of(minGuests)))));
+        }
+        if (minPrice != null) {
+            filters.add(Query.of(f -> f.range(r -> r.field("basePricePerNight").gte(JsonData.of(minPrice.doubleValue())))));
+        }
+        if (maxPrice != null) {
+            filters.add(Query.of(f -> f.range(r -> r.field("basePricePerNight").lte(JsonData.of(maxPrice.doubleValue())))));
+        }
+        if (isInstantBook != null && isInstantBook) {
+            filters.add(Query.of(f -> f.term(t -> t.field("isInstantBook").value(true))));
+        }
+
+        BoolQuery boolQuery = BoolQuery.of(b -> b
+                .must(must)
+                .filter(filters)
+        );
 
         NativeQuery searchQuery = NativeQuery.builder()
                 .withQuery(q -> q.bool(boolQuery))
