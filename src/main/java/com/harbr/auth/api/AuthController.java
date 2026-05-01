@@ -1,6 +1,5 @@
 package com.harbr.auth.api;
 
-import com.harbr.auth.application.AuthService;
 import com.harbr.auth.application.dto.*;
 import com.harbr.common.web.ApiResponse;
 import jakarta.validation.Valid;
@@ -10,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -42,5 +42,22 @@ public class AuthController {
         UUID userId = (UUID) authentication.getPrincipal();
         authService.logout(userId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse<Map<String, String>>> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request) {
+        String token = authService.forgotPassword(request);
+        return ResponseEntity.ok(ApiResponse.ok(Map.of(
+                "message", "If an account exists with this email, a reset token has been generated.",
+                "token", token
+        )));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request);
+        return ResponseEntity.ok(ApiResponse.ok());
     }
 }
