@@ -1,20 +1,47 @@
 package com.harbr.common.web;
 
-public record ApiResponse<T>(boolean success, T data, ApiError error) {
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class ApiResponse<T> {
+
+    private boolean success;
+    private T data;
+    private String errorCode;
+    private String message;
+
+    private ApiResponse(boolean success, T data, String errorCode, String message) {
+        this.success = success;
+        this.data = data;
+        this.errorCode = errorCode;
+        this.message = message;
+    }
 
     public static <T> ApiResponse<T> ok(T data) {
-        return new ApiResponse<>(true, data, null);
+        return new ApiResponse<>(true, data, null, null);
     }
 
-    public static <T> ApiResponse<T> ok() {
-        return new ApiResponse<>(true, null, null);
+    public static ApiResponse<Void> ok() {
+        return new ApiResponse<>(true, null, null, null);
     }
 
-    public static <T> ApiResponse<T> error(String code, String message) {
-        return new ApiResponse<>(false, null, new ApiError(code, message));
+    public static ApiResponse<Void> error(String errorCode, String message) {
+        return new ApiResponse<>(false, null, errorCode, message);
     }
 
-    public static <T> ApiResponse<T> error(ApiError error) {
-        return new ApiResponse<>(false, null, error);
+    public boolean isSuccess() {
+        return success;
+    }
+
+    public T getData() {
+        return data;
+    }
+
+    public String getErrorCode() {
+        return errorCode;
+    }
+
+    public String getMessage() {
+        return message;
     }
 }
