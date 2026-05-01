@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -23,6 +24,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -43,7 +45,17 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/refresh").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/auth/forgot-password").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/auth/reset-password").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/payments/webhook").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/properties").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/properties/*").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/properties/*/availability").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/search").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/search/es").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/search/es/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/amenities").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/reviews/property/**").permitAll()
                 .requestMatchers("/api/docs/**").permitAll()
                 .requestMatchers("/api/swagger-ui/**").permitAll()
                 .requestMatchers("/api/swagger-ui.html").permitAll()
