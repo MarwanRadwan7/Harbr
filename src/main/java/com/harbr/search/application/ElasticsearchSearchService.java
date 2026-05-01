@@ -1,8 +1,5 @@
 package com.harbr.search.application;
 
-import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
-import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import co.elastic.clients.json.JsonData;
 import com.harbr.search.domain.PropertyDocument;
 import com.harbr.search.infrastructure.PropertySearchRepository;
 import lombok.RequiredArgsConstructor;
@@ -11,15 +8,16 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
+import org.springframework.data.elasticsearch.core.query.Criteria;
+import org.springframework.data.elasticsearch.core.query.CriteriaQuery;
+import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -39,54 +37,43 @@ public class ElasticsearchSearchService {
                                           Boolean isInstantBook,
                                           int page, int size) {
 
-        List<Query> must = new ArrayList<>();
-        List<Query> filters = new ArrayList<>();
-
-        filters.add(Query.of(f -> f.term(t -> t.field("status").value("ACTIVE"))));
+        Criteria criteria = new Criteria("status").is("ACTIVE");
 
         if (query != null && !query.isBlank()) {
-            must.add(Query.of(f -> f.multiMatch(mm -> mm
-                    .fields("title", "description", "city", "hostName")
-                    .query(query))));
+            criteria = criteria.or(new Criteria("title").matches(query))
+                    .or(new Criteria("description").matches(query))
+                    .or(new Criteria("city").matches(query))
+                    .or(new Criteria("hostName").matches(query));
         }
         if (city != null && !city.isBlank()) {
-            filters.add(Query.of(f -> f.term(t -> t.field("city").value(city))));
+            criteria = criteria.and(new Criteria("city").is(city));
         }
         if (country != null && !country.isBlank()) {
-            filters.add(Query.of(f -> f.term(t -> t.field("country").value(country))));
+            criteria = criteria.and(new Criteria("country").is(country));
         }
         if (propertyType != null && !propertyType.isBlank()) {
-            filters.add(Query.of(f -> f.term(t -> t.field("propertyType").value(propertyType))));
+            criteria = criteria.and(new Criteria("propertyType").is(propertyType));
         }
         if (minBedrooms != null) {
-            filters.add(Query.of(f -> f.range(r -> r.field("bedrooms").gte(JsonData.of(minBedrooms)))));
+            criteria = criteria.and(new Criteria("bedrooms").greaterThanEqual(minBedrooms));
         }
         if (minBathrooms != null) {
-            filters.add(Query.of(f -> f.range(r -> r.field("bathrooms").gte(JsonData.of(minBathrooms)))));
+            criteria = criteria.and(new Criteria("bathrooms").greaterThanEqual(minBathrooms));
         }
         if (minGuests != null) {
-            filters.add(Query.of(f -> f.range(r -> r.field("maxGuests").gte(JsonData.of(minGuests)))));
+            criteria = criteria.and(new Criteria("maxGuests").greaterThanEqual(minGuests));
         }
         if (minPrice != null) {
-            filters.add(Query.of(f -> f.range(r -> r.field("basePricePerNight").gte(JsonData.of(minPrice.doubleValue())))));
+            criteria = criteria.and(new Criteria("basePricePerNight").greaterThanEqual(minPrice));
         }
         if (maxPrice != null) {
-            filters.add(Query.of(f -> f.range(r -> r.field("basePricePerNight").lte(JsonData.of(maxPrice.doubleValue())))));
+            criteria = criteria.and(new Criteria("basePricePerNight").lessThanEqual(maxPrice));
         }
         if (isInstantBook != null && isInstantBook) {
-            filters.add(Query.of(f -> f.term(t -> t.field("isInstantBook").value(true))));
+            criteria = criteria.and(new Criteria("isInstantBook").is(true));
         }
 
-        BoolQuery boolQuery = BoolQuery.of(b -> b
-                .must(must)
-                .filter(filters)
-        );
-
-        NativeQuery searchQuery = NativeQuery.builder()
-                .withQuery(q -> q.bool(boolQuery))
-                .withPageable(PageRequest.of(page, size))
-                .build();
-
+        Query searchQuery = new CriteriaQuery(criteria, PageRequest.of(page, size));
         SearchHits<PropertyDocument> hits = elasticsearchOperations.search(searchQuery, PropertyDocument.class);
 
         List<PropertyDocument> content = hits.getSearchHits().stream()
