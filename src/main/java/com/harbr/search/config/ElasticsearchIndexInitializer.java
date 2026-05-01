@@ -9,6 +9,7 @@ import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.IndexOperations;
 import org.springframework.stereotype.Component;
 
+@ConditionalOnProperty(name = "harbr.search.elasticsearch.enabled", havingValue = "true", matchIfMissing = false)
 @Component
 @Profile("!test")
 @RequiredArgsConstructor

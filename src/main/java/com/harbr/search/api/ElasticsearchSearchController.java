@@ -5,6 +5,7 @@ import com.harbr.common.web.PagedResponse;
 import com.harbr.search.application.ElasticsearchSearchService;
 import com.harbr.search.domain.PropertyDocument;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,6 +15,7 @@ import java.math.BigDecimal;
 @RestController
 @RequestMapping("/api/search/es")
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "harbr.search.elasticsearch.enabled", havingValue = "true", matchIfMissing = false)
 public class ElasticsearchSearchController {
 
     private final ElasticsearchSearchService searchService;

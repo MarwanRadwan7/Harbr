@@ -6,6 +6,7 @@ import com.harbr.search.domain.PropertyDocument;
 import com.harbr.search.infrastructure.PropertySearchRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -13,6 +14,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@ConditionalOnProperty(name = "harbr.search.elasticsearch.enabled", havingValue = "true", matchIfMissing = false)
 public class ElasticsearchSyncService {
 
     private final PropertySearchRepository propertySearchRepository;
