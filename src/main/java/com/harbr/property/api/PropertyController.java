@@ -12,6 +12,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -32,10 +34,49 @@ public class PropertyController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<PagedResponse<PropertyResponse>>> list(
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) String country,
+            @RequestParam(required = false) String propertyType,
+            @RequestParam(required = false) Integer minGuests,
+            @RequestParam(required = false) Integer minBedrooms,
+            @RequestParam(required = false) Integer minBathrooms,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) Boolean isInstantBook,
+            @RequestParam(required = false) List<UUID> amenityIds,
+            @RequestParam(required = false) String query,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
+
+        if (hasAnyFilter(city, country, propertyType, minGuests, minBedrooms, minBathrooms, minPrice, maxPrice, isInstantBook, amenityIds, query)) {
+            PropertySearchRequest searchRequest = new PropertySearchRequest(
+                    city, country, propertyType, minGuests, minBedrooms, minBathrooms,
+                    minPrice, maxPrice, isInstantBook, amenityIds, null, null,
+                    null, null, null, query, page, size
+            );
+            PagedResponse<PropertyResponse> response = propertyService.search(searchRequest);
+            return ResponseEntity.ok(ApiResponse.ok(response));
+        }
+
         PagedResponse<PropertyResponse> response = propertyService.list(page, size);
         return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
+    private boolean hasAnyFilter(String city, String country, String propertyType, Integer minGuests,
+                                 Integer minBedrooms, Integer minBathrooms, BigDecimal minPrice,
+                                 BigDecimal maxPrice, Boolean isInstantBook,
+                                 List<UUID> amenityIds, String query) {
+        return (city != null && !city.isBlank())
+                || (country != null && !country.isBlank())
+                || (propertyType != null && !propertyType.isBlank())
+                || minGuests != null
+                || minBedrooms != null
+                || minBathrooms != null
+                || minPrice != null
+                || maxPrice != null
+                || (isInstantBook != null && isInstantBook)
+                || (amenityIds != null && !amenityIds.isEmpty())
+                || (query != null && !query.isBlank());
     }
 
     @GetMapping("/{id}")
@@ -80,7 +121,7 @@ public class PropertyController {
     }
 
     @GetMapping("/{id}/availability")
-    public ResponseEntity<ApiResponse<java.util.List<AvailabilityRuleDto>>> getAvailability(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponse<List<AvailabilityRuleDto>>> getAvailability(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.ok(propertyService.getAvailabilityRules(id)));
     }
 

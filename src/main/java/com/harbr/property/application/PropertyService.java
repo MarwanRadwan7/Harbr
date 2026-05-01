@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -84,6 +85,14 @@ public class PropertyService {
         Page<Property> properties = propertyRepository.findByDeletedAtIsNull(
                 PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt")));
         return PagedResponse.from(properties.map(this::toPropertyResponse));
+    }
+
+    @Transactional(readOnly = true)
+    public PagedResponse<PropertyResponse> search(PropertySearchRequest request) {
+        Specification<Property> spec = PropertySpecifications.withSearch(request);
+        Page<Property> page = propertyRepository.findAll(spec,
+                PageRequest.of(request.page(), request.size(), Sort.by(Sort.Direction.DESC, "createdAt")));
+        return PagedResponse.from(page.map(this::toPropertyResponse));
     }
 
     @Transactional(readOnly = true)
@@ -228,6 +237,10 @@ public class PropertyService {
                     .amenity(amenity)
                     .build());
         }
+    }
+
+    public PropertyResponse toPropertyResponsePublic(Property property) {
+        return toPropertyResponse(property);
     }
 
     private PropertyResponse toPropertyResponse(Property property) {
