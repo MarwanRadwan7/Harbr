@@ -1,12 +1,21 @@
 package com.harbr.common.exception;
 
-public class EntityNotFoundException extends BusinessException {
+public class EntityNotFoundException extends RuntimeException {
 
-    public EntityNotFoundException(String entity, Object id) {
-        super("ENTITY_NOT_FOUND", entity + " not found with id: " + id);
+    private final String entityType;
+    private final Object entityId;
+
+    public EntityNotFoundException(String entityType, Object entityId) {
+        super(entityType + " not found with id: " + entityId);
+        this.entityType = entityType;
+        this.entityId = entityId;
     }
 
-    public EntityNotFoundException(String message) {
-        super("ENTITY_NOT_FOUND", message);
+    public String getEntityType() {
+        return entityType;
+    }
+
+    public Object getEntityId() {
+        return entityId;
     }
 }

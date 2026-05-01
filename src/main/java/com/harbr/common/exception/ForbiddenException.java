@@ -1,8 +1,8 @@
 package com.harbr.common.exception;
 
-public class ForbiddenException extends BusinessException {
+public class ForbiddenException extends RuntimeException {
 
     public ForbiddenException(String message) {
-        super("FORBIDDEN", message);
+        super(message);
     }
 }

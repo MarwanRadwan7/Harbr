@@ -1,8 +1,8 @@
 package com.harbr.common.exception;
 
-public class UnauthorizedException extends BusinessException {
+public class UnauthorizedException extends RuntimeException {
 
     public UnauthorizedException(String message) {
-        super("UNAUTHORIZED", message);
+        super(message);
     }
 }

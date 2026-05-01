@@ -1,8 +1,8 @@
 package com.harbr.common.exception;
 
-public class ConflictException extends BusinessException {
+public class ConflictException extends RuntimeException {
 
     public ConflictException(String message) {
-        super("CONFLICT", message);
+        super(message);
     }
 }
