@@ -14,6 +14,8 @@ import com.harbr.common.web.PagedResponse;
 import com.harbr.property.domain.Property;
 import com.harbr.property.domain.PropertyStatus;
 import com.harbr.property.infrastructure.PropertyRepository;
+import com.harbr.notification.application.NotificationService;
+import com.harbr.notification.domain.NotificationChannel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -42,6 +44,7 @@ public class BookingService {
     private final PropertyRepository propertyRepository;
     private final UserRepository userRepository;
     private final PricingService pricingService;
+    private final NotificationService notificationService;
 
     @Transactional
     public BookingResponse create(UUID guestId, CreateBookingRequest request) {
@@ -136,6 +139,17 @@ public class BookingService {
 
         booking = bookingRepository.save(booking);
         log.info("Booking cancelled: id={}, cancelledBy={}", booking.getId(), booking.getCancelledBy());
+
+        UUID notifyUserId = "HOST".equals(booking.getCancelledBy())
+                ? booking.getGuest().getId()
+                : booking.getProperty().getHost().getId();
+        notificationService.createNotification(
+                notifyUserId, "Booking Cancelled",
+                "A booking for " + booking.getProperty().getTitle() + " has been cancelled",
+                NotificationChannel.IN_APP, "BOOKING_CANCELLED", "booking",
+                booking.getId().toString(), booking.getId(), "booking"
+        );
+
         return toBookingResponse(booking);
     }
 
@@ -157,6 +171,14 @@ public class BookingService {
         booking.setStatus(BookingStatus.CONFIRMED);
         booking = bookingRepository.save(booking);
         log.info("Booking confirmed: id={}", booking.getId());
+
+        notificationService.createNotification(
+                booking.getGuest().getId(), "Booking Confirmed",
+                "Your booking for " + booking.getProperty().getTitle() + " has been confirmed",
+                NotificationChannel.IN_APP, "BOOKING_CONFIRMED", "booking",
+                booking.getId().toString(), booking.getId(), "booking"
+        );
+
         return toBookingResponse(booking);
     }
 
@@ -178,6 +200,43 @@ public class BookingService {
         booking.setStatus(BookingStatus.REJECTED);
         booking = bookingRepository.save(booking);
         log.info("Booking rejected: id={}", booking.getId());
+
+        notificationService.createNotification(
+                booking.getGuest().getId(), "Booking Rejected",
+                "Your booking for " + booking.getProperty().getTitle() + " has been rejected",
+                NotificationChannel.IN_APP, "BOOKING_REJECTED", "booking",
+                booking.getId().toString(), booking.getId(), "booking"
+        );
+
+        return toBookingResponse(booking);
+    }
+
+    @Transactional
+    public BookingResponse complete(UUID bookingId, UUID userId) {
+        Booking booking = findBookingOrThrow(bookingId);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User", userId));
+
+        if (!booking.getProperty().getHost().getId().equals(userId) && user.getRole() != Role.ADMIN) {
+            throw new ForbiddenException("Only the host can complete a booking");
+        }
+
+        if (booking.getStatus() != BookingStatus.CONFIRMED) {
+            throw new BusinessException("INVALID_STATUS", "Only CONFIRMED bookings can be completed");
+        }
+
+        booking.setStatus(BookingStatus.COMPLETED);
+        booking = bookingRepository.save(booking);
+        log.info("Booking completed: id={}", booking.getId());
+
+        notificationService.createNotification(
+                booking.getGuest().getId(), "Booking Completed",
+                "Your stay at " + booking.getProperty().getTitle() + " has been marked as completed. You can now leave a review!",
+                NotificationChannel.IN_APP, "BOOKING_COMPLETED", "booking",
+                booking.getId().toString(), booking.getId(), "booking"
+        );
+
         return toBookingResponse(booking);
     }
 

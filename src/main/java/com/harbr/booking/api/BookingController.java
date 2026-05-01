@@ -77,4 +77,13 @@ public class BookingController {
         BookingResponse response = bookingService.reject(id, userId);
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
+
+    @PatchMapping("/{id}/complete")
+    public ResponseEntity<ApiResponse<BookingResponse>> complete(
+            @PathVariable UUID id,
+            Authentication authentication) {
+        UUID userId = (UUID) authentication.getPrincipal();
+        BookingResponse response = bookingService.complete(id, userId);
+        return ResponseEntity.ok(ApiResponse.ok(response));
+    }
 }
