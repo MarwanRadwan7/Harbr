@@ -10,6 +10,7 @@ import com.harbr.common.web.PagedResponse;
 import com.harbr.property.application.dto.*;
 import com.harbr.property.domain.*;
 import com.harbr.property.infrastructure.*;
+import com.harbr.search.application.ElasticsearchSyncService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -37,6 +38,7 @@ public class PropertyService {
     private final AvailabilityRuleRepository availabilityRuleRepository;
     private final UserRepository userRepository;
     private final FileStorageService fileStorageService;
+    private final ElasticsearchSyncService elasticsearchSyncService;
 
     @Transactional
     public PropertyResponse create(UUID hostId, CreatePropertyRequest request) {
@@ -76,6 +78,8 @@ public class PropertyService {
         if (request.amenityIds() != null && !request.amenityIds().isEmpty()) {
             linkAmenities(property, request.amenityIds());
         }
+
+        elasticsearchSyncService.indexProperty(property);
 
         return toPropertyResponse(property);
     }
@@ -134,6 +138,7 @@ public class PropertyService {
         }
 
         property = propertyRepository.save(property);
+        elasticsearchSyncService.indexProperty(property);
         return toPropertyResponse(property);
     }
 
@@ -143,6 +148,7 @@ public class PropertyService {
         verifyOwnerOrAdmin(property, userId);
         property.setDeletedAt(Instant.now());
         propertyRepository.save(property);
+        elasticsearchSyncService.removeProperty(propertyId);
     }
 
     @Transactional
