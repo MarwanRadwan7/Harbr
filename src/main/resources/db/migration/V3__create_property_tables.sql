@@ -74,4 +74,3 @@ CREATE INDEX idx_properties_created_at ON properties(created_at);
 CREATE INDEX idx_property_images_property_id ON property_images(property_id);
 CREATE INDEX idx_availability_rules_property_id ON availability_rules(property_id);
 CREATE INDEX idx_addresses_city ON addresses(city);
-CREATE INDEX idx_addresses_location ON addresses USING gist (ST_SetSRID(ST_MakePoint(lng, lat), 4326));
