@@ -180,7 +180,7 @@ Swagger UI is available at: `http://localhost:8080/swagger-ui.html`
 | POST | `/api/messages/conversations/{id}/messages` | Send message |
 | GET | `/api/messages/conversations/{id}/messages` | List messages (paginated) |
 | PATCH | `/api/messages/conversations/{id}/read` | Mark as read |
-| WS | `/chat/{conversationId}` | WebSocket message handler |
+| WS | `/ws` | WebSocket message handler (STOMP) |
 
 ### Notifications
 | Method | Endpoint | Description |
