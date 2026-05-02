@@ -4,6 +4,7 @@ import com.harbr.auth.domain.User;
 import com.harbr.auth.infrastructure.UserRepository;
 import com.harbr.common.exception.BusinessException;
 import com.harbr.common.exception.EntityNotFoundException;
+import com.harbr.common.web.ApiResponse;
 import com.harbr.messaging.application.dto.ConversationResponse;
 import com.harbr.messaging.application.dto.CreateConversationRequest;
 import com.harbr.messaging.application.dto.MessageResponse;
@@ -20,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +39,7 @@ public class MessagingService {
     private final PropertyRepository propertyRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Transactional
     public ConversationResponse createConversation(UUID guestId, CreateConversationRequest request) {
@@ -104,7 +107,7 @@ public class MessagingService {
                 .content(request.content())
                 .build();
 
-        message = messageRepository.save(message);
+message = messageRepository.save(message);
 
         conversation.setLastMessageContent(request.content());
         conversation.setLastMessageAt(Instant.now());
@@ -113,6 +116,10 @@ public class MessagingService {
         UUID recipientId = conversation.getGuest().getId().equals(senderId)
                 ? conversation.getHost().getId()
                 : conversation.getGuest().getId();
+
+        // Broadcast to WebSocket subscribers
+        broadcastMessage(conversation.getId(), senderId, message);
+
         notificationService.createNotification(
                 recipientId, "New Message",
                 sender.getFullName() + " sent you a message",
@@ -198,5 +205,28 @@ public class MessagingService {
                 m.getIsRead(),
                 m.getCreatedAt()
         );
+    }
+
+    private void broadcastMessage(UUID conversationId, UUID senderId, Message message) {
+        MessageResponse response = toMessageResponse(message);
+        ApiResponse<MessageResponse> wrapped = ApiResponse.ok(response);
+
+        // Broadcast to conversation topic (for group subscribers)
+        messagingTemplate.convertAndSend("/topic/conversation/" + conversationId, wrapped);
+        log.debug("Broadcast to /topic/conversation/{}", conversationId);
+
+        // Determine recipient
+        Conversation conversation = message.getConversation();
+        UUID recipientId = conversation.getGuest().getId().equals(senderId)
+                ? conversation.getHost().getId()
+                : conversation.getGuest().getId();
+
+        // Broadcast to recipient's private queue
+        messagingTemplate.convertAndSendToUser(recipientId.toString(), "/queue/messages", wrapped);
+        log.debug("Broadcast to /user/{}/queue/messages", recipientId);
+
+        // Also broadcast to sender's queue (for confirmation)
+        messagingTemplate.convertAndSendToUser(senderId.toString(), "/queue/messages", wrapped);
+        log.debug("Broadcast to /user/{}/queue/messages (sender confirmation)", senderId);
     }
 }

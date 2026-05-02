@@ -1,13 +1,12 @@
 package com.harbr.messaging.api;
 
-import com.harbr.common.web.ApiResponse;
 import com.harbr.messaging.application.MessagingService;
-import com.harbr.messaging.application.dto.MessageResponse;
 import com.harbr.messaging.application.dto.SendMessageRequest;
 import com.harbr.messaging.domain.Conversation;
 import com.harbr.messaging.infrastructure.ConversationRepository;
 import com.harbr.common.exception.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -19,6 +18,7 @@ import java.util.UUID;
 
 @Controller
 @RequiredArgsConstructor
+@Slf4j
 public class WebSocketMessageHandler {
 
     private final MessagingService messagingService;
@@ -31,21 +31,24 @@ public class WebSocketMessageHandler {
             @Payload SendMessageRequest request,
             Authentication authentication) {
 
+        log.debug("Received WebSocket message for conversation: {}", conversationId);
+
+        if (authentication == null || authentication.getPrincipal() == null) {
+            log.error("Authentication is null - user not authenticated via WebSocket");
+            throw new IllegalStateException("User not authenticated");
+        }
+
         UUID userId = (UUID) authentication.getPrincipal();
-        SendMessageRequest fixedRequest = new SendMessageRequest(conversationId, request.content());
-        MessageResponse response = messagingService.sendMessage(userId, fixedRequest);
+        log.debug("User {} sending message to conversation {}", userId, conversationId);
 
-        Conversation conversation = conversationRepository.findById(conversationId)
-                .orElseThrow(() -> new EntityNotFoundException("Conversation", conversationId));
+        try {
+            // Service now handles DB save AND WebSocket broadcast
+            messagingService.sendMessage(userId, new SendMessageRequest(conversationId, request.content()));
 
-        messagingTemplate.convertAndSend(
-                "/topic/conversation/" + conversationId, ApiResponse.ok(response));
-
-        UUID recipientId = conversation.getGuest().getId().equals(userId)
-                ? conversation.getHost().getId()
-                : conversation.getGuest().getId();
-
-        messagingTemplate.convertAndSendToUser(
-                recipientId.toString(), "/queue/messages", ApiResponse.ok(response));
+            log.debug("Message sent successfully via service");
+        } catch (Exception e) {
+            log.error("Error sending WebSocket message: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 }

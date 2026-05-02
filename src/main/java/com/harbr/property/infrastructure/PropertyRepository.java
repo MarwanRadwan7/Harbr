@@ -25,11 +25,13 @@ public interface PropertyRepository extends JpaRepository<Property, UUID>, JpaSp
             JOIN addresses a ON p.address_id = a.id
             WHERE p.deleted_at IS NULL
               AND p.status = 'ACTIVE'
-              AND ST_DWithin(
-                  ST_SetSRID(ST_MakePoint(a.lng, a.lat), 4326)::geography,
-                  ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography,
-                  :radiusMeters
-              )
+              AND (
+                6371000 * acos(
+                  cos(radians(:lat)) * cos(radians(a.lat))
+                  * cos(radians(a.lng) - radians(:lng))
+                  + sin(radians(:lat)) * sin(radians(a.lat))
+                )
+              ) <= :radiusMeters
             ORDER BY p.created_at DESC
             """,
             nativeQuery = true)
